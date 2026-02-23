@@ -12,75 +12,582 @@
   background: #f5f5f5;
 }
 
-/* 顶部导航栏 */
+/* 顶部导航栏 - 更柔和、有温度的设计 */
 .toolbar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 52px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 14px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 4px 24px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 6px 8px 6px 16px;
   z-index: 1000;
+  gap: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  max-width: calc(100vw - 24px);
+}
+
+.toolbar-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .toolbar-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  letter-spacing: -0.5px;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-right: 8px;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.toolbar-buttons {
+/* 工具栏分组容器 */
+.toolbar-groups {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
 }
 
+/* 单个工具栏分组 - 更简洁的分隔方式 */
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  position: relative;
+}
+
+.toolbar-group:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 20px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.08) 50%, transparent 100%);
+}
+
+.group-label {
+  display: none;
+}
+
+.group-buttons {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+/* 按钮样式 - 更柔和、更自然 */
 .toolbar-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  gap: 5px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #4a5568;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.toolbar-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border-radius: inherit;
+}
+
+.toolbar-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #2d3748;
+  transform: translateY(-0.5px);
+}
+
+.toolbar-btn:hover::before {
+  opacity: 1;
+}
+
+.toolbar-btn:active {
+  background: rgba(0, 0, 0, 0.08);
+  transform: translateY(0);
+  transition-duration: 0.05s;
+}
+
+.toolbar-btn.active {
+  background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.toolbar-btn:disabled:hover {
+  background: transparent;
+  transform: none;
+}
+
+.toolbar-btn:disabled::before {
+  display: none;
+}
+
+/* 删除按钮 - 更克制的红色 */
+.toolbar-btn.delete-btn {
+  color: #c53030;
+}
+
+.toolbar-btn.delete-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fed7d7 0%, #feb2b2 100%);
+  color: #c53030;
+}
+
+.btn-icon {
+  font-size: 15px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+}
+
+.btn-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 背景按钮组 */
+.background-buttons {
+  gap: 2px;
+}
+
+.background-buttons .toolbar-btn {
+  padding: 7px 10px;
+}
+
+.toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-left: 8px;
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.scale-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5568;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .toolbar {
+    padding: 6px 6px 6px 14px;
+    gap: 10px;
+  }
+  
+  .toolbar-groups {
+    gap: 3px;
+  }
+  
+  .toolbar-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .btn-icon {
+    font-size: 14px;
+  }
+  
+  .btn-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    top: 8px;
+    padding: 5px 5px 5px 12px;
+    gap: 8px;
+  }
+  
+  .toolbar-main {
+    gap: 12px;
+  }
+  
+  .toolbar-title {
+    font-size: 15px;
+    padding-right: 6px;
+  }
+  
+  .toolbar-btn {
+    padding: 6px 9px;
+  }
+}
+
+@media (max-width: 680px) {
+  .toolbar {
+    flex-wrap: wrap;
+    padding: 8px;
+    gap: 6px;
+    border-radius: 12px;
+  }
+  
+  .toolbar-main {
+    width: 100%;
+    gap: 8px;
+  }
+  
+  .toolbar-title {
+    border-right: none;
+    padding-right: 0;
+  }
+  
+  .toolbar-groups {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding-top: 4px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  
+  .toolbar-info {
+    order: 2;
+    margin-left: auto;
+    border-left: none;
+    padding-left: 0;
+  }
+  
+  .toolbar-group:not(:last-child)::after {
+    height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-text {
+    display: none;
+  }
+  
+  .toolbar-btn {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  
+  .btn-icon {
+    font-size: 17px;
+  }
+  
+  .toolbar-title {
+    font-size: 14px;
+  }
+}
+
+/* Stage 样式调整 - 适应悬浮toolbar */
+.app-container > div:last-child {
+  margin-top: 0;
+  height: 100vh !important;
+}
+
+/* 可拖动左侧工具栏 */
+.draggable-toolbar {
+  position: fixed;
+  z-index: 1001;
   background: #ffffff;
-  color: #333;
-  font-size: 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.draggable-toolbar.dragging {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  cursor: grabbing;
+}
+
+.draggable-toolbar.collapsed {
+  min-width: auto;
+}
+
+.drag-handle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  border-right: 1px solid #dee2e6;
+  cursor: grab;
+  gap: 8px;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.drag-dots span {
+  width: 4px;
+  height: 4px;
+  background: #adb5bd;
+  border-radius: 50%;
+}
+
+.toggle-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #ffffff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: #e9ecef;
+  color: #212529;
+}
+
+.toolbar-content {
+  padding: 12px;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toolbar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.shape-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shape-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.toolbar-btn:hover {
-  background: #f0f0f0;
-  border-color: #ccc;
+.shape-btn:hover {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+  transform: translateY(-1px);
 }
 
-.toolbar-btn:active {
-  background: #e0e0e0;
-  transform: translateY(1px);
+.shape-btn:active {
+  transform: translateY(0);
 }
 
-.toolbar-btn.active {
-  background: #e3f2fd;
-  border-color: #2196f3;
-  color: #1976d2;
+.shape-btn.active {
+  background: #e7f5ff;
+  border-color: #339af0;
 }
 
-.btn-icon {
+.shape-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.shape-label {
+  font-size: 11px;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.shape-btn.active .shape-label {
+  color: #1971c2;
+}
+
+.text-btn .shape-icon {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.draggable-toolbar .toolbar-divider {
+  width: 100%;
+  height: 1px;
+  background: #e9ecef;
+  margin: 0;
+}
+
+/* 画笔工具样式 */
+.drawing-btn .shape-icon {
+  font-size: 22px;
+}
+
+.drawing-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.color-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  border-color: #339af0;
+  box-shadow: 0 0 0 2px #e7f5ff;
+}
+
+.width-options {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.width-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.width-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.width-btn.active {
+  background: #e7f5ff;
+  border-color: #339af0;
+}
+
+.width-line {
+  width: 16px;
+  background: #333;
+  border-radius: 1px;
+}
+
+/* 笔画操作按钮样式 */
+.stroke-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+  margin-top: 4px;
+}
+
+.stroke-action-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
+  transition: all 0.2s ease;
 }
 
-.toolbar-hint {
-  font-size: 13px;
-  color: #888;
+.stroke-action-btn:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 
-/* Stage 样式调整 */
-.app-container > div:last-child {
-  margin-top: 56px;
-  height: calc(100vh - 56px) !important;
+.stroke-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f1f3f5;
 }

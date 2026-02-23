@@ -1,14 +1,25 @@
-import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Stage, Layer, Transformer } from 'react-konva';
+import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { Stage, Layer, Transformer, Rect, Line } from 'react-konva';
 import Shape from './Shape';
-import { SHAPE_TYPES } from '../utils/shapeUtils';
+import Connection from './Connection';
+import Background from './Background';
+import DrawingLayer from './DrawingLayer';
+import { SHAPE_TYPES, isShapeInViewport, getConnectionAnchorPoint } from '../utils/shapeUtils';
 
 const Canvas = forwardRef(({
   stageConfig,
   isPanning,
   shapes,
+  connections,
   selectedShapeId,
+  selectedConnectionId,
   isTextMode,
+  isConnectionMode,
+  connectionStart,
+  tempConnection,
+  backgroundType,
+  canvasSize,
+  canvasExtent,
   onWheel,
   onMouseDown,
   onMouseMove,
@@ -16,13 +27,21 @@ const Canvas = forwardRef(({
   onMouseLeave,
   onStageClick,
   onSelectShape,
+  onSelectConnection,
   onDragEnd,
   onTransformEnd,
   onTextDblClick,
+  onAnchorClick,
+  isDrawingMode,
+  strokes,
+  onStrokesChange,
+  strokeColor,
+  strokeWidth,
 }, ref) => {
   const stageRef = useRef();
   const transformerRef = useRef();
   const shapeRefs = useRef({});
+  const [hoveredAnchor, setHoveredAnchor] = useState(null);
 
   useImperativeHandle(ref, () => ({
     getStage: () => stageRef.current,
@@ -32,8 +51,8 @@ const Canvas = forwardRef(({
     getViewportCenter: () => {
       const stage = stageRef.current;
       if (!stage) return { x: 0, y: 0 };
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      const width = canvasSize.width;
+      const height = canvasSize.height;
       const centerX = (width / 2 - stage.x()) / stage.scaleX();
       const centerY = (height / 2 - stage.y()) / stage.scaleY();
       return { x: centerX, y: centerY };
@@ -101,32 +120,142 @@ const Canvas = forwardRef(({
   }, [onTextDblClick]);
 
   const handleStageClick = useCallback((e) => {
-    if (e.target === e.target.getStage()) {
+    if (e.target === e.target.getStage() && !isDrawingMode) {
       onStageClick(e);
     }
-  }, [onStageClick]);
+  }, [onStageClick, isDrawingMode]);
+
+  // 处理鼠标移动
+  const handleMouseMove = useCallback((e) => {
+    if (isDrawingMode) return;
+    onMouseMove(e);
+  }, [onMouseMove, isDrawingMode]);
+
+  // 处理鼠标按下
+  const handleMouseDown = useCallback((e) => {
+    if (isDrawingMode) return;
+    onMouseDown(e);
+  }, [onMouseDown, isDrawingMode]);
+
+  // 处理鼠标松开
+  const handleMouseUp = useCallback((e) => {
+    if (isDrawingMode) return;
+    onMouseUp(e);
+  }, [onMouseUp, isDrawingMode]);
+
+  // 处理鼠标离开
+  const handleMouseLeave = useCallback((e) => {
+    if (isDrawingMode) return;
+    onMouseLeave(e);
+  }, [onMouseLeave, isDrawingMode]);
+
+  // 获取临时连线的点
+  const getTempConnectionPoints = useCallback(() => {
+    if (!tempConnection || !connectionStart) return null;
+    
+    const fromShape = shapes.find((s) => s.id === connectionStart.shapeId);
+    if (!fromShape) return null;
+    
+    const fromPoint = getConnectionAnchorPoint(fromShape, connectionStart.anchor);
+    return [fromPoint.x, fromPoint.y, tempConnection.x, tempConnection.y];
+  }, [tempConnection, connectionStart, shapes]);
+
+  const viewport = useMemo(() => {
+    const scale = stageConfig.scale;
+    const stageX = stageConfig.x;
+    const stageY = stageConfig.y;
+    const width = canvasSize.width;
+    const height = canvasSize.height;
+
+    return {
+      left: -stageX / scale,
+      right: (width - stageX) / scale,
+      top: -stageY / scale,
+      bottom: (height - stageY) / scale,
+    };
+  }, [stageConfig, canvasSize]);
+
+  const visibleShapes = useMemo(() => {
+    return shapes.filter((shape) => isShapeInViewport(shape, viewport));
+  }, [shapes, viewport]);
+
+  useEffect(() => {
+    const currentIds = new Set(shapes.map((s) => s.id));
+    Object.keys(shapeRefs.current).forEach((id) => {
+      if (!currentIds.has(id)) {
+        delete shapeRefs.current[id];
+      }
+    });
+  }, [shapes]);
 
   return (
     <Stage
       ref={stageRef}
-      width={window.innerWidth}
-      height={window.innerHeight}
+      width={canvasSize.width}
+      height={canvasSize.height}
       scaleX={stageConfig.scale}
       scaleY={stageConfig.scale}
       x={stageConfig.x}
       y={stageConfig.y}
       onWheel={onWheel}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
       onClick={handleStageClick}
       style={{
-        cursor: isPanning ? 'grabbing' : isTextMode ? 'crosshair' : 'default',
+        cursor: isPanning ? 'grabbing' : isTextMode ? 'crosshair' : isConnectionMode ? 'crosshair' : isDrawingMode ? 'crosshair' : 'default',
       }}
     >
+      <Background stageConfig={stageConfig} type={backgroundType} />
+      {/* 画布边界指示器 */}
+      <Layer listening={false}>
+        <Rect
+          x={-canvasExtent / 2}
+          y={-canvasExtent / 2}
+          width={canvasExtent}
+          height={canvasExtent}
+          stroke="#00A3FF"
+          strokeWidth={2 / stageConfig.scale}
+          dash={[10 / stageConfig.scale, 5 / stageConfig.scale]}
+          opacity={0.3}
+        />
+      </Layer>
+      
+      {/* 画笔图层 */}
+      <DrawingLayer
+        isDrawingMode={isDrawingMode}
+        stageConfig={stageConfig}
+        strokes={strokes}
+        onStrokesChange={onStrokesChange}
+        strokeColor={strokeColor}
+        strokeWidth={strokeWidth}
+      />
+      
       <Layer>
-        {shapes.map((shape) => (
+        {/* 渲染连接线 */}
+        {connections.map((connection) => (
+          <Connection
+            key={connection.id}
+            connection={connection}
+            shapes={shapes}
+            isSelected={connection.id === selectedConnectionId}
+            onSelect={onSelectConnection}
+          />
+        ))}
+        
+        {/* 渲染临时连线（拖拽中） */}
+        {isConnectionMode && tempConnection && (
+          <Line
+            points={getTempConnectionPoints()}
+            stroke="#00A3FF"
+            strokeWidth={2}
+            dash={[5, 5]}
+            listening={false}
+          />
+        )}
+        
+        {visibleShapes.map((shape) => (
           <Shape
             key={shape.id}
             shape={shape}
@@ -140,6 +269,11 @@ const Canvas = forwardRef(({
             onTransformEnd={onTransformEnd}
             onDblClick={shape.type === SHAPE_TYPES.TEXT ? handleTextDblClick : undefined}
             isPanning={isPanning}
+            isConnectionMode={isConnectionMode}
+            isSelected={shape.id === selectedShapeId}
+            onAnchorClick={onAnchorClick}
+            hoveredAnchor={hoveredAnchor}
+            onAnchorHover={setHoveredAnchor}
           />
         ))}
         <Transformer

@@ -8,6 +8,19 @@ export const SHAPE_TYPES = {
   STAR: 'star',
 };
 
+export const CONNECTION_TYPES = {
+  LINE: 'line',
+  ARROW: 'arrow',
+};
+
+export const CONNECTION_ANCHORS = {
+  TOP: 'top',
+  BOTTOM: 'bottom',
+  LEFT: 'left',
+  RIGHT: 'right',
+  CENTER: 'center',
+};
+
 export const DEFAULT_SHAPE_PROPS = {
   stroke: '#333',
   strokeWidth: 2,
@@ -176,3 +189,64 @@ export const getArrowPoints = (width, height) => [
   width / 4, height / 4,
   -width / 2, height / 4,
 ];
+
+export const isShapeInViewport = (shape, viewport, padding = 100) => {
+  const bounds = getShapeBounds(shape);
+  return !(
+    bounds.right < viewport.left - padding ||
+    bounds.left > viewport.right + padding ||
+    bounds.bottom < viewport.top - padding ||
+    bounds.top > viewport.bottom + padding
+  );
+};
+
+// 获取图形连接点坐标
+export const getConnectionAnchorPoint = (shape, anchor) => {
+  const bounds = getShapeBounds(shape);
+  
+  switch (anchor) {
+    case CONNECTION_ANCHORS.TOP:
+      return { x: shape.x, y: bounds.top };
+    case CONNECTION_ANCHORS.BOTTOM:
+      return { x: shape.x, y: bounds.bottom };
+    case CONNECTION_ANCHORS.LEFT:
+      return { x: bounds.left, y: shape.y };
+    case CONNECTION_ANCHORS.RIGHT:
+      return { x: bounds.right, y: shape.y };
+    case CONNECTION_ANCHORS.CENTER:
+    default:
+      return { x: shape.x, y: shape.y };
+  }
+};
+
+// 创建连接线
+export const createConnection = (fromShapeId, toShapeId, fromAnchor = CONNECTION_ANCHORS.CENTER, toAnchor = CONNECTION_ANCHORS.CENTER, type = CONNECTION_TYPES.LINE) => {
+  return {
+    id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    fromShapeId,
+    toShapeId,
+    fromAnchor,
+    toAnchor,
+    type,
+    stroke: '#333',
+    strokeWidth: 2,
+  };
+};
+
+// 计算箭头路径点
+export const getArrowHeadPoints = (x, y, angle, size = 10) => {
+  const angle1 = angle + Math.PI * 0.85;
+  const angle2 = angle - Math.PI * 0.85;
+  
+  return [
+    x, y,
+    x + size * Math.cos(angle1), y + size * Math.sin(angle1),
+    x + size * 0.5 * Math.cos(angle), y + size * 0.5 * Math.sin(angle),
+    x + size * Math.cos(angle2), y + size * Math.sin(angle2),
+  ];
+};
+
+// 计算两点之间的角度
+export const getAngleBetweenPoints = (x1, y1, x2, y2) => {
+  return Math.atan2(y2 - y1, x2 - x1);
+};

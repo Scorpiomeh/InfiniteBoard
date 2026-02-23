@@ -1,16 +1,30 @@
-# React + Vite
+# InfiniteBoard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个基于 Web 的无限画布白板应用，支持图形绘制、自由手绘、连接线创建等功能。
 
-Currently, two official plugins are available:
+## 功能特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **多种图形** - 矩形、圆形、菱形、三角形、箭头、星形、文本
+- **连接线** - 图形间创建带箭头的连接线，自动跟随图形移动
+- **手绘模式** - 自由绘制，支持调整笔触颜色和粗细
+- **画布导航** - 滚轮缩放、空格拖拽平移、适应内容
+- **编辑操作** - 撤销/重做、复制/粘贴、删除
+- **背景切换** - 点阵、方格、空白三种背景
+- **数据导入导出** - 支持 JSON 格式的导入/导出
 
-## React Compiler
+## 快捷键
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| 操作 | 快捷键 |
+|------|--------|
+| 撤销 | `Ctrl + Z` |
+| 重做 | `Ctrl + Y` |
+| 复制 | `Ctrl + C` |
+| 粘贴 | `Ctrl + V` |
+| 删除 | `Delete` |
+| 平移画布 | `空格 + 拖拽` |
 
-## Expanding the ESLint configuration
+## 技术栈
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React 19
+- Vite 7
+- Konva.js
