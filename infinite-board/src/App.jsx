@@ -2,10 +2,12 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import Toolbar from './components/Toolbar';
 import DraggableToolbar from './components/DraggableToolbar';
 import Canvas from './components/Canvas';
+import AIAssistantPanel from './components/AIAssistantPanel';
 import { BACKGROUND_TYPES } from './components/Background';
 import { useCanvas } from './hooks/useCanvas';
 import { useShapes } from './hooks/useShapes';
-import { SHAPE_TYPES, CONNECTION_TYPES, CONNECTION_ANCHORS, getConnectionAnchorPoint } from './utils/shapeUtils';
+import { useAIAssistant } from './hooks/useAIAssistant';
+import { SHAPE_TYPES, CONNECTION_TYPES, CONNECTION_ANCHORS, createShape, createConnection } from './utils/shapeUtils';
 import './App.css';
 
 const STROKE_COLORS = ['#333333', '#e03131', '#2f9e44', '#1971c2', '#f08c00', '#000000'];
@@ -69,7 +71,22 @@ function App() {
     addConnection,
     exportShapes,
     importShapes,
+    loadShapes,
   } = useShapes();
+
+  const {
+    isLoading: isAILoading,
+    error: aiError,
+    apiKey,
+    apiEndpoint,
+    modelName,
+    generateFlowchart,
+    generateDiagram,
+    configureAPI,
+    clearError: clearAIError,
+  } = useAIAssistant();
+
+  const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
 
   const handleAddShape = useCallback((type) => {
     addShape(type, canvasRef);
@@ -168,7 +185,7 @@ function App() {
     setBackgroundType(type);
   }, []);
 
-  const handleStageClick = useCallback((e) => {
+  const handleStageClick = useCallback(() => {
     // 如果在连线模式，点击空白处取消连线
     if (isConnectionMode && connectionStart) {
       setConnectionStart(null);
@@ -196,6 +213,72 @@ function App() {
       alert('导入失败: ' + error.message);
     }
   }, [importShapes]);
+
+  const processGeneratedShapes = useCallback((result) => {
+    const shapeCounterRef = { current: { rect: 0, circle: 0, text: 0, diamond: 0, triangle: 0, arrow: 0, star: 0 } };
+
+    const newShapes = result.nodes.map((node) => {
+      shapeCounterRef.current[node.type] = (shapeCounterRef.current[node.type] || 0) + 1;
+      return {
+        ...createShape(node.type, node.x, node.y, shapeCounterRef.current[node.type]),
+        text: node.text,
+      };
+    });
+
+    const viewportCenter = canvasRef.current?.getViewportCenter() || { x: 0, y: 0 };
+    const offsetX = viewportCenter.x - newShapes.reduce((sum, s) => sum + s.x, 0) / newShapes.length;
+    const offsetY = viewportCenter.y - newShapes.reduce((sum, s) => sum + s.y, 0) / newShapes.length;
+
+    const adjustedShapes = newShapes.map((shape) => ({
+      ...shape,
+      x: shape.x + offsetX,
+      y: shape.y + offsetY,
+    }));
+
+    const nodeIdMap = new Map();
+    adjustedShapes.forEach((shape, index) => {
+      const originalNode = result.nodes[index];
+      nodeIdMap.set(originalNode.id, shape.id);
+    });
+
+    const newConnections = result.connections
+      .filter((conn) => nodeIdMap.has(conn.fromShapeId) && nodeIdMap.has(conn.toShapeId))
+      .map((conn) => ({
+        ...createConnection(
+          nodeIdMap.get(conn.fromShapeId),
+          nodeIdMap.get(conn.toShapeId),
+          conn.fromAnchor || 'center',
+          conn.toAnchor || 'center',
+          conn.type || 'line'
+        ),
+      }));
+
+    loadShapes(adjustedShapes, newConnections);
+    setIsAIPanelOpen(false);
+  }, [loadShapes]);
+
+  const handleGenerateFlowchart = useCallback(async (description) => {
+    const result = await generateFlowchart(description);
+    if (result && result.nodes.length > 0) {
+      processGeneratedShapes(result);
+    }
+  }, [generateFlowchart, processGeneratedShapes]);
+
+  const handleGenerateDiagram = useCallback(async (description) => {
+    const result = await generateDiagram(description);
+    if (result && result.nodes.length > 0) {
+      processGeneratedShapes(result);
+    }
+  }, [generateDiagram, processGeneratedShapes]);
+
+  const handleToggleAIPanel = useCallback(() => {
+    setIsAIPanelOpen((prev) => !prev);
+  }, []);
+
+  const handleCloseAIPanel = useCallback(() => {
+    setIsAIPanelOpen(false);
+    clearAIError();
+  }, [clearAIError]);
 
   // 处理锚点点击（用于连线模式）
   const handleAnchorClick = useCallback((shapeId, anchor) => {
@@ -230,7 +313,7 @@ function App() {
   }, [isConnectionMode, connectionStart, connectionType, addConnection]);
 
   // 处理图形点击（普通选择模式）
-  const handleShapeClick = useCallback((shapeId, e) => {
+  const handleShapeClick = useCallback((shapeId) => {
     if (!isConnectionMode) {
       selectShape(shapeId);
     }
@@ -295,13 +378,16 @@ function App() {
         if (isDrawingMode) {
           setIsDrawingMode(false);
         }
+        if (isAIPanelOpen) {
+          setIsAIPanelOpen(false);
+        }
         clearSelection();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [copyShape, pasteShape, undo, redo, deleteSelectedShape, deleteSelectedConnection, selectedConnectionId, isConnectionMode, isDrawingMode, clearSelection]);
+  }, [copyShape, pasteShape, undo, redo, deleteSelectedShape, deleteSelectedConnection, selectedConnectionId, isConnectionMode, isDrawingMode, clearSelection, isAIPanelOpen]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -336,6 +422,8 @@ function App() {
         onRedoStroke={redoStroke}
         canUndoStrokes={canUndoStrokes}
         canRedoStrokes={canRedoStrokes}
+        isAIPanelOpen={isAIPanelOpen}
+        onToggleAIPanel={handleToggleAIPanel}
       />
       <Toolbar
         backgroundType={backgroundType}
@@ -387,6 +475,18 @@ function App() {
         onStrokesChange={handleStrokesChange}
         strokeColor={strokeColor}
         strokeWidth={strokeWidth}
+      />
+      <AIAssistantPanel
+        isOpen={isAIPanelOpen}
+        onClose={handleCloseAIPanel}
+        onGenerateFlowchart={handleGenerateFlowchart}
+        onGenerateDiagram={handleGenerateDiagram}
+        isLoading={isAILoading}
+        error={aiError}
+        apiKey={apiKey}
+        apiEndpoint={apiEndpoint}
+        modelName={modelName}
+        onConfigureAPI={configureAPI}
       />
     </div>
   );

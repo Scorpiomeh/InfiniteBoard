@@ -34,6 +34,8 @@ const DraggableToolbar = ({
   onRedoStroke,
   canUndoStrokes,
   canRedoStrokes,
+  isAIPanelOpen,
+  onToggleAIPanel,
 }) => {
   const [position, setPosition] = useState({ x: 20, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
@@ -226,6 +228,20 @@ const DraggableToolbar = ({
               <span className="shape-icon">T</span>
               <span className="shape-label">
                 {isTextMode ? '点击画布添加' : '文本'}
+              </span>
+            </button>
+          </div>
+
+          <div className="toolbar-divider" />
+
+          <div className="toolbar-section">
+            <button
+              className={`shape-btn ai-btn ${isAIPanelOpen ? 'active' : ''}`}
+              onClick={onToggleAIPanel}
+            >
+              <span className="shape-icon">🤖</span>
+              <span className="shape-label">
+                {isAIPanelOpen ? 'AI 绘图' : 'AI 助手'}
               </span>
             </button>
           </div>
