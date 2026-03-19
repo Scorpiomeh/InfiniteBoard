@@ -93,7 +93,6 @@ const AIAssistantPanel = ({
     <div className="ai-assistant-panel" ref={panelRef}>
       <div className="ai-panel-header">
         <div className="ai-panel-title">
-          <span className="ai-icon">🤖</span>
           <span>AI 智能绘图助手</span>
         </div>
         <button className="ai-close-btn" onClick={onClose}>×</button>
@@ -180,12 +179,12 @@ const AIAssistantPanel = ({
             >
               {isLoading ? (
                 <>
-                  <span className="ai-loading-spinner">⏳</span>
+                  <span className="ai-loading-spinner"></span>
                   生成中...
                 </>
               ) : (
                 <>
-                  <span>✨</span>
+                
                   生成 {mode === 'flowchart' ? '流程图' : '示意图'}
                 </>
               )}
@@ -211,7 +210,7 @@ const AIAssistantPanel = ({
 
       <div className="ai-panel-footer">
         <div className="ai-tip">
-          💡 提示：描述越详细，生成结果越准确
+          提示：描述越详细，生成结果越准确
         </div>
       </div>
     </div>

@@ -239,9 +239,8 @@ const DraggableToolbar = ({
               className={`shape-btn ai-btn ${isAIPanelOpen ? 'active' : ''}`}
               onClick={onToggleAIPanel}
             >
-              <span className="shape-icon">🤖</span>
               <span className="shape-label">
-                {isAIPanelOpen ? 'AI 绘图' : 'AI 助手'}
+                {isAIPanelOpen ? 'AI绘图' : 'AI助手'}
               </span>
             </button>
           </div>
