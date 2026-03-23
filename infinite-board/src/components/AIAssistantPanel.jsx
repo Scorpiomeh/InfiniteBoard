@@ -184,7 +184,7 @@ const AIAssistantPanel = ({
                 </>
               ) : (
                 <>
-                
+
                   生成 {mode === 'flowchart' ? '流程图' : '示意图'}
                 </>
               )}
